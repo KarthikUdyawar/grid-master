@@ -1,116 +1,139 @@
-# Sudoku Book Generator — Sprint 1: MVP
+# Sudoku Book Generator — Sprint 2: Customization
 
-**Duration:** Week 1 (Days 1–7)  
-**Goal:** A working CLI tool that generates a print-ready Sudoku PDF book with cover, puzzles, answers, and back cover.
+**Duration:** Week 2 (Days 8–14)
+**Goal:** Mixed-difficulty books, multi-page-size support, custom title/author on cover.
 
-**Branch strategy:** Direct commit to `master` (v1.0)
+**Branch strategy:** Direct commit to `master` (v2.0)
 
 ---
 
 ## Sprint Goal
 
-> *A user can run a single command and receive a complete, print-ready Sudoku PDF book with their chosen difficulty and puzzle count — with all puzzles guaranteed to have a unique solution.*
+> *User runs one command and gets a print-ready PDF with mixed difficulty levels, correct page size, and their own title/author — with zero layout breakage.*
 
 ---
 
 ## Backlog
 
-### 🏗️ SUB-1 — Sudoku Engine
+### 📐 SUB-7 — Page Size Support
 **Branch:** `master`
 
-- [x] Implement `fill_board()` — recursive backtracking with randomized digit order
-- [x] Implement `is_valid()` — row, column, and 3×3 box constraint check
-- [x] Implement `count_solutions()` — uniqueness verifier with early exit at 2
-- [x] Implement `make_puzzle()` — remove cells one by one, revert if uniqueness breaks
-- [x] Verify 100% unique-solution guarantee across all difficulty levels
+**Behaviors to test (TDD order):**
+- [ ] `resolve_page_size("a4")` → `(595, 842)`
+- [ ] `resolve_page_size("letter")` → `(612, 792)`
+- [ ] `resolve_page_size("a5")` → `(420, 595)`
+- [ ] Unknown size → raises `ValueError`
+- [ ] A5 answer section → 4 grids/page (2×2), not 6
+- [ ] Grid dims scale proportionally per page size
+
+**Tasks:**
+- [ ] Extract `resolve_page_size(size: str) -> tuple` — single responsibility, no side effects
+- [ ] Refactor all layout fns: replace module-level `PAGE_W/H` constants with `(page_w, page_h)` params
+- [ ] `draw_answer_section()` → branch on page size: A5 → 2×2, else → 2×3
+- [ ] Add `--pagesize` arg: choices `["a4", "letter", "a5"]`, default `"a4"`
+- [ ] Test all 3 sizes end-to-end, verify no grid overflow
+
+**Clean Code notes:**
+- `resolve_page_size` = pure fn, no globals
+- Layout fns: `page_w, page_h` as explicit params, not globals mutated at runtime
+- Name: `grid_cell_size` not `s` or `sz`
 
 ---
 
-### ⚙️ SUB-2 — CLI Interface
+### 🖊️ SUB-8 — Custom Title & Author
 **Branch:** `master`
 
-- [x] Add `--puzzles` argument (default: 10)
-- [x] Add `--difficulty` argument with choices: `easy`, `medium`, `hard`, `expert`, `master`
-- [x] Add `--output` argument (default: `sudoku_book.pdf`)
-- [x] Print per-puzzle progress to stdout during generation
+**Behaviors to test (TDD order):**
+- [ ] Cover renders `--title` value (default `"Sudoku"`)
+- [ ] Cover renders `--author` when provided; hidden when empty
+- [ ] Title >40 chars → truncated gracefully, no layout break
+- [ ] Back cover renders author credit when `--author` set
+
+**Tasks:**
+- [ ] Add `--title` arg (default `"Sudoku"`)
+- [ ] Add `--author` arg (default `""`)
+- [ ] `draw_cover(title, author, ...)` — author line conditional on non-empty string
+- [ ] `truncate_title(title: str, max_chars: int = 40) -> str` — clean fn, tested independently
+- [ ] `draw_back_cover(author, ...)` — add small author credit if set
+
+**Clean Code notes:**
+- `truncate_title` = pure fn, one thing, no side effects
+- No magic `40` inline — extract `MAX_TITLE_CHARS = 40`
+- `draw_cover` signature: keyword args for `title` and `author`, not positional
 
 ---
 
-### 🗄️ SUB-3 — Difficulty Configuration
+### 🔀 SUB-9 — Mixed-Difficulty Book
 **Branch:** `master`
 
-- [x] Define 5 levels with blank count and accent color
-- [x] Easy — 32 blanks (green)
-- [x] Medium — 40 blanks (blue)
-- [x] Hard — 48 blanks (orange)
-- [x] Expert — 54 blanks (red)
-- [x] Master — 58 blanks (purple)
+**Behaviors to test (TDD order):**
+- [ ] `parse_difficulty("easy")` → `["easy"]`
+- [ ] `parse_difficulty("easy,hard,master")` → `["easy", "hard", "master"]`
+- [ ] Invalid level → raises `ValueError` with clear message
+- [ ] `parse_puzzle_counts("10", 3)` → `[10, 10, 10]` (broadcast single)
+- [ ] `parse_puzzle_counts("5,10,5", 3)` → `[5, 10, 5]`
+- [ ] Count list len ≠ difficulty list len → raises `ValueError`
+- [ ] Mixed PDF → section divider page between each difficulty level
+- [ ] Cover badge → multi-level list (e.g. `"Easy · Hard · Master"`)
+- [ ] Answer section → grouped by level, color-matched headers
+
+**Tasks:**
+- [ ] `parse_difficulty(raw: str) -> list[str]` — split + validate each token
+- [ ] `parse_puzzle_counts(raw: str, num_levels: int) -> list[int]` — broadcast or split
+- [ ] `draw_section_divider(difficulty_config, page_w, page_h)` — full-bleed accent, centered name
+- [ ] `build_puzzle_groups(difficulties, counts) -> list[PuzzleGroup]` — named tuple/dataclass, one fn per concern
+- [ ] Update `draw_cover()` — render badge row for multiple levels
+- [ ] Update `draw_answer_section()` — iterate by group, inject divider label per section
+- [ ] Update `draw_back_cover()` — summary reflects total + level breakdown
+
+**Clean Code notes:**
+- `PuzzleGroup = namedtuple("PuzzleGroup", ["config", "puzzles"])` — no raw dicts
+- `parse_*` fns = pure, tested independently, no I/O
+- `draw_section_divider` = one fn, one responsibility, no conditional branching inside
+- Do One Thing: `build_puzzle_groups` builds; `generate_puzzles` generates; never both
 
 ---
 
-### 🎨 SUB-4 — PDF Layout & Rendering
+### 📄 SUB-10 — Documentation Update
 **Branch:** `master`
 
-- [x] Set up ReportLab canvas on A4 pagesize
-- [x] Implement `draw_cover()` — dark background, title, difficulty badge, puzzle count
-- [x] Implement `draw_puzzle_page()` — large grid (460px), compact header/footer, no wasted whitespace
-- [x] Implement `draw_answer_section()` — 6 grids per page (2 cols × 3 rows), auto-sized to fit
-- [x] Implement `draw_back_cover()` — matching dark theme, accent bars, decorative grid, completion message
-- [x] Implement `draw_grid()` — alternating 3×3 box shading, bold thick box borders, thin cell lines
+- [ ] `README.md` — add `--pagesize`, `--title`, `--author`, mixed-difficulty examples
+- [ ] `PRD.md` — already updated (v2.0, June 2026)
+- [ ] `TODO.md` — this document
 
 ---
 
-### 🖌️ SUB-5 — Visual Design
-**Branch:** `master`
+## TDD Cycle Order (recommended)
 
-- [x] Difficulty-specific accent color applied to cover, badges, answer labels, back cover
-- [x] Answer section: given digits in dark gray, solved digits in blue
-- [x] Puzzle page: difficulty badge under title, puzzle number, footer with page count
-- [x] Cover: faint decorative grid overlay on dark background
-- [x] Back cover: top + bottom accent bars, tagline, puzzle count summary
+```
+SUB-7: resolve_page_size → layout param refactor → A5 answer layout → CLI arg
+SUB-8: truncate_title → draw_cover title → draw_cover author → back cover credit
+SUB-9: parse_difficulty → parse_puzzle_counts → build_puzzle_groups → draw_section_divider → cover badge → answer grouping
+```
 
----
-
-### 📄 SUB-6 — Documentation
-**Branch:** `master`
-
-- [x] Write `README.md` — install, usage, CLI args, difficulty table, PDF structure, customization
-- [x] Write `PRD.md` — problem, users, scope, requirements, tech design, roadmap, success metrics
-- [x] Write `TODO.md` — this document
+One behavior → one test → minimal impl → next. No horizontal slicing.
 
 ---
 
 ## Definition of Done
 
-- [x] Single command generates valid PDF end-to-end
-- [x] All puzzles have unique solutions (algorithmically enforced)
-- [x] PDF contains: cover → puzzles → answers (6/page) → back cover
-- [x] All 5 difficulty levels tested and working
-- [x] `README.md`, `PRD.md`, and `TODO.md` written
-- [x] No crashes on puzzle counts from 1 to 200
-
----
-
-## Out of Scope (→ Sprint 2)
-
-- Mixed-difficulty book (multiple levels in one PDF)
-- Custom page size flag (`--pagesize letter|a4|a5`)
-- 2 puzzles per page layout option
-- Custom book title and author name on cover
-- GUI (Tkinter or web)
-- 6×6 grid mode for kids / beginners
-- Export puzzle data as JSON alongside PDF
-- Batch export (generate all 5 difficulties in one run)
+- [ ] All 3 page sizes render without grid overflow
+- [ ] Mixed-difficulty PDF: correct dividers, grouped answers, multi-badge cover
+- [ ] `--title` and `--author` render; long title truncated gracefully
+- [ ] All new fns: <20 lines, single responsibility, intention-revealing names
+- [ ] Every new behavior has a corresponding passing test
+- [ ] Zero regression on v1.0: single difficulty, A4, default title still works
+- [ ] `README.md` updated with new CLI args and examples
 
 ---
 
 ## Decision Log
 
-| Decision                                 | Reason                                                                        |
-| ---------------------------------------- | ----------------------------------------------------------------------------- |
-| Single `.py` file, no modules            | Simplicity — easy to share, run, and modify with zero project overhead        |
-| ReportLab over other PDF libs            | Mature, pure-Python, no system dependencies, precise canvas control           |
-| Uniqueness check via `count_solutions()` | Guarantees puzzle quality — stops removal the moment a second solution exists |
-| 6 answers per page (2×3) over 4 (2×2)    | Better paper efficiency while keeping grids readable                          |
-| Direct commit to `master`                | v1.0 MVP — no parallel feature work, branching overhead not justified yet     |
-| A4 only (no Letter)                      | Single clear target for v1.0; page size flag deferred to Sprint 2             |
+| Decision                                         | Reason                                                              |
+| ------------------------------------------------ | ------------------------------------------------------------------- |
+| `resolve_page_size` as pure fn                   | Testable without ReportLab; no global mutation                      |
+| `page_w, page_h` explicit params                 | Layout fns stay pure; no implicit global dependency                 |
+| `parse_difficulty` / `parse_puzzle_counts` split | Single responsibility; each independently testable                  |
+| `PuzzleGroup` namedtuple over raw dict           | Intention-revealing; no magic key strings                           |
+| `MAX_TITLE_CHARS = 40` constant                  | No magic numbers inline; single source of truth                     |
+| TDD vertical slices, not horizontal              | Prevents testing imagined behavior; each test responds to real impl |
