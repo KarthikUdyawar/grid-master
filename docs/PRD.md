@@ -126,7 +126,7 @@ Minimize friction between "I want a Sudoku book" and "I have a printable PDF."
 ## 6. Technical Design
 
 ### v1.0 Flow
-```
+```text
 CLI args
    │
    ▼
@@ -144,7 +144,7 @@ output .pdf
 ```
 
 ### v2.0 Flow (additions highlighted)
-```
+```text
 CLI args  ← NEW: --pagesize, --title, --author
            ← NEW: --difficulty accepts comma list
            ← NEW: --puzzles accepts comma list
@@ -195,7 +195,7 @@ uv run main.py --pagesize letter --output book_letter.pdf
 
 ## 7. File Structure
 
-```
+```text
 .
 ├── docs/
 │   ├── PRD.md           # This document

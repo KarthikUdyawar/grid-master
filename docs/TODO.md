@@ -3,7 +3,7 @@
 **Duration:** Week 2 (Days 8–14)
 **Goal:** Mixed-difficulty books, multi-page-size support, custom title/author on cover.
 
-**Branch strategy:** Direct commit to `master` (v2.0)
+**Branch strategy:** PR-based workflow for v2.0 — development happens on `develop`; feature work is created on `feature/*` branches (e.g. `feature/customization`) and merged into `develop` via pull requests. `master` is protected and updated only through release merges from `develop` (or tagged release commits).
 
 ---
 
@@ -105,7 +105,7 @@
 
 ## TDD Cycle Order (recommended)
 
-```
+```text
 SUB-7: resolve_page_size → layout param refactor → A5 answer layout → CLI arg
 SUB-8: truncate_title → draw_cover title → draw_cover author → back cover credit
 SUB-9: parse_difficulty → parse_puzzle_counts → build_puzzle_groups → draw_section_divider → cover badge → answer grouping

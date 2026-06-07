@@ -7,8 +7,8 @@ Difficulties: easy, medium, hard, expert, master
 import argparse
 import random
 import copy
-from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from collections import namedtuple
 
 # ─── Difficulty Config ───────────────────────────────────────────────────────
 DIFFICULTY = {
@@ -151,14 +151,12 @@ def parse_puzzle_counts(raw: str, num_levels: int) -> list:
 
 # ─── Puzzle Groups ───────────────────────────────────────────────────────────
 
-from collections import namedtuple
-
 PuzzleGroup = namedtuple("PuzzleGroup", ["config", "puzzles", "solutions"])
 
 
 def build_puzzle_groups(difficulties: list, counts: list) -> list:
     groups = []
-    for difficulty, count in zip(difficulties, counts):
+    for difficulty, count in zip(difficulties, counts, strict=True):
         config = DIFFICULTY[difficulty]
         puzzles, solutions = [], []
         for i in range(count):
@@ -470,7 +468,7 @@ def generate_book(difficulties, counts, title, author, pagesize, output):
     print(f"Generating {total} puzzles across {len(difficulties)} level(s)...")
 
     groups = build_puzzle_groups(difficulties, counts)
-    print(f"All puzzles generated. Writing PDF...")
+    print("All puzzles generated. Writing PDF...")
 
     c = canvas.Canvas(output, pagesize=(page_w, page_h))
     c.setTitle(f"{title} — Sudoku Book")

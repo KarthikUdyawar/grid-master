@@ -107,7 +107,7 @@ uv run main.py --pagesize a5 --puzzles 20 --difficulty medium --output booklet.p
 
 ### Single difficulty
 
-```
+```text
 Page 1        → Cover
 Pages 2–N+1   → Puzzles (1 per page)
 Pages N+2–end → Answers (6 per page on A4/Letter, 4 per page on A5)
@@ -116,14 +116,14 @@ Last page     → Back cover
 
 ### Mixed difficulty
 
-```
+```text
 Page 1        → Cover (badge row shows all levels)
 Page 2        → [First level puzzles — no divider before first section]
 ...
 Page X        → Section divider (full-bleed accent color, level name)
 Page X+1      → [Next level puzzles]
 ...
-Pages N+–end  → Answers (grouped by level, color-matched headers)
+Remaining pages → Answers (grouped by level, color-matched headers)
 Last page     → Back cover
 ```
 
